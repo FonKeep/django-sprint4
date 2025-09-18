@@ -16,7 +16,7 @@ def profile(request, username):
     template = 'blog/profile.html'
     post_list = Post.objects.select_related().filter(
         author=user
-    ).order_by('-id')
+    ).order_by('id')
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -167,5 +167,5 @@ def page_not_found(request, exception):
     return render(request, 'pages/404.html', status=404)
 
 
-def internal_error(request, exception):
+def internal_error(request):
     return render(request, 'pages/500.html', status=500)
