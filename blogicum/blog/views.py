@@ -40,9 +40,9 @@ def index(request):
     post_list = (
         Post.objects.select_related().
         filter(
-                is_published=True,
-                pub_date__lte=timezone.now(),
-                category__is_published=True).order_by('-id'))
+            is_published=True,
+            pub_date__lte=timezone.now(),
+            category__is_published=True).order_by('-id'))
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -71,13 +71,12 @@ def category_posts(request, category_slug):
     template = 'blog/category.html'
     category = (
         get_object_or_404(
-                            Category,
-                            slug=category_slug,
-                            is_published__exact=True))
+            Category,
+            slug=category_slug,
+            is_published__exact=True))
     paginator = Paginator(category.posts.filter(
                     is_published__exact=True,
-                    pub_date__lte=timezone.now(),
-                ), 10)
+                    pub_date__lte=timezone.now(),), 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {'category': category, 'page_obj': page_obj}
