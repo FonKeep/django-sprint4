@@ -71,9 +71,9 @@ def category_posts(request, category_slug):
     template = 'blog/category.html'
     category = (
         get_object_or_404(
-                            Category,
-                            slug=category_slug,
-                            is_published__exact=True))
+            Category,
+            slug=category_slug,
+            is_published__exact=True))
     paginator = Paginator(category.posts.filter(
                     is_published__exact=True,
                     pub_date__lte=timezone.now(),), 10)
