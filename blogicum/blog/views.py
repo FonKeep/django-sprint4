@@ -75,8 +75,8 @@ def category_posts(request, category_slug):
             slug=category_slug,
             is_published__exact=True))
     paginator = Paginator(category.posts.filter(
-                    is_published__exact=True,
-                    pub_date__lte=timezone.now(),), 10)
+        is_published__exact=True,
+        pub_date__lte=timezone.now(),), 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {'category': category, 'page_obj': page_obj}
