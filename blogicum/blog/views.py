@@ -3,7 +3,9 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LogoutView
 from django.shortcuts import redirect
+from django.http import Http404
 
 from .models import Post, Category, Comments
 
@@ -19,6 +21,7 @@ def profile(request, username):
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    print(user.get_full_name)
     context = {'profile': user, 'page_obj': page_obj}
     return render(request, template, context)
 
@@ -41,7 +44,7 @@ def index(request):
         filter(
             is_published=True,
             pub_date__lte=timezone.now(),
-            category__is_published=True).order_by('-id'))
+            category__is_published=True))
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -168,3 +171,9 @@ def page_not_found(request, exception):
 
 def internal_error(request):
     return render(request, 'pages/500.html', status=500)
+
+
+def logout_view(request):
+    if request.method == 'POST':
+        raise Http404()
+    return LogoutView.as_view()(request)

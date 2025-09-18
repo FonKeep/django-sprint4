@@ -6,6 +6,8 @@ from django.conf.urls.static import static
 from django.contrib.auth.forms import UserCreationForm
 from django.views.generic.edit import CreateView
 
+from blog.views import logout_view
+
 
 urlpatterns = [
     path('auth/', include('django.contrib.auth.urls')),
@@ -21,6 +23,7 @@ urlpatterns = [
         ),
         name='registration',
     ),
+    path('auth/logout/', logout_view, name='logout')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
