@@ -58,7 +58,6 @@ class Location(BaseModel):
         return self.name
 
 
-
 class Post(BaseModel, Title):
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
@@ -84,7 +83,6 @@ class Post(BaseModel, Title):
                                  on_delete=models.SET_NULL,
                                  null=True,
                                  verbose_name='Категория')
-
 
     class Meta:
         verbose_name = 'публикация'

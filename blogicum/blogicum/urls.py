@@ -7,7 +7,6 @@ from django.contrib.auth.forms import UserCreationForm
 from django.views.generic.edit import CreateView
 
 
-
 urlpatterns = [
     path('auth/', include('django.contrib.auth.urls')),
     path('', include('blog.urls')),

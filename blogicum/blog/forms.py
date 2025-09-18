@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 from .models import Post, Comments
 
+
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
