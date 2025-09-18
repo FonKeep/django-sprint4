@@ -182,7 +182,7 @@ def test_post(
 
     @contextmanager
     def set_post_category_unpublished(post_adapter):
-        category = post_adapter.category
+        category = post_adapter.Category
         is_published = category.is_published
         try:
             category.is_published = False
