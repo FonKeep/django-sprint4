@@ -15,8 +15,7 @@ def profile(request, username):
     user = get_object_or_404(User, username=username)
     template = 'blog/profile.html'
     post_list = Post.objects.select_related().filter(
-        author=user
-    ).order_by('id')
+        author=user)
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
