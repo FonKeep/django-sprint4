@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LogoutView
 from django.shortcuts import redirect
-from django.http import Http404, HttpResponse
+from django.http import Http404
 
 from .models import Post, Category, Comments
 
