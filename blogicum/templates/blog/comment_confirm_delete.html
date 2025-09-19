@@ -1,0 +1,7 @@
+<h1>Удалить комментарий?</h1>
+<p>{{ comment.text }}</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit">Удалить</button>
+  <a href="{% url 'blog:post_detail' post.pk %}">Отмена</a>
+</form>
