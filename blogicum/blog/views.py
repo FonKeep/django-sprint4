@@ -99,7 +99,6 @@ def create_post(request):
     return render(request, template, context)
 
 
-
 def edit_post(request, pk):
     instance = get_object_or_404(Post, pk=pk)
     if not request.user.is_authenticated:
