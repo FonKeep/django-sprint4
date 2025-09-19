@@ -99,20 +99,30 @@ def create_post(request):
     return render(request, template, context)
 
 
-@login_required
+
 def edit_post(request, pk):
-    instance = get_object_or_404(Post, pk=pk, author=request.user)
+    instance = get_object_or_404(Post, pk=pk)
+
+    if not request.user.is_authenticated:
+        return redirect('blog:post_detail', pk=instance.pk)
+
+    if instance.author != request.user:
+        return redirect('blog:post_detail', pk=instance.pk)
+
     form = CreatePost(
         request.POST or None,
         request.FILES or None,
-        instance=instance)
+        instance=instance
+    )
     template = 'blog/create.html'
     context = {'form': form, 'post': instance}
+
     if form.is_valid():
         instance = form.save(commit=False)
         instance.author = request.user
         instance.save()
-        return redirect('blog:post_detail', pk)
+        return redirect('blog:post_detail', pk=instance.pk)
+
     return render(request, template, context)
 
 
