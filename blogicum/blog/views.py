@@ -164,7 +164,8 @@ def delete_comment(request, pk, comment_pk):
         post.save()
         instance.delete()
         return redirect('blog:post_detail', pk=pk)
-    return HttpResponse(status=200)
+    return HttpResponse(
+        "Страница подтверждения удаления комментария", status=200)
 
 
 def csrf_failure(request, reason=''):
