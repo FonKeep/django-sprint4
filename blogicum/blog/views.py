@@ -155,7 +155,6 @@ def edit_comment(request, pk, comment_pk):
     return render(request, template, context)
 
 
-
 @login_required
 def delete_comment(request, pk, comment_pk):
     instance = get_object_or_404(Comments, pk=comment_pk, author=request.user)
