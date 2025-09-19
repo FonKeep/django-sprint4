@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LogoutView
 from django.shortcuts import redirect
-from django.http import Http404
+from django.http import Http404, HttpResponse
 
 from .models import Post, Category, Comments
 
@@ -155,6 +155,7 @@ def edit_comment(request, pk, comment_pk):
     return render(request, template, context)
 
 
+
 @login_required
 def delete_comment(request, pk, comment_pk):
     instance = get_object_or_404(Comments, pk=comment_pk, author=request.user)
@@ -164,12 +165,7 @@ def delete_comment(request, pk, comment_pk):
         post.save()
         instance.delete()
         return redirect('blog:post_detail', pk=pk)
-    form = CreateComments(instance=instance)
-    return render(request, 'blog/comment.html', {
-        'form': form,
-        'comment': instance,
-        'post': post
-    })
+    return HttpResponse(status=200)
 
 
 def csrf_failure(request, reason=''):
