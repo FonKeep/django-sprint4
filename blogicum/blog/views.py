@@ -12,17 +12,18 @@ from .models import Post, Category, Comments
 from .forms import UserForm, CreatePost, CreateComments
 
 
-@login_required
 def profile(request, username):
     user = get_object_or_404(User, username=username)
     template = 'blog/profile.html'
-    post_list = Post.objects.select_related().filter(
-        author=user)
+    post_list = Post.objects.filter(author=user)
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    print(user.get_full_name)
-    context = {'profile': user, 'page_obj': page_obj}
+    context = {
+        'profile': user,
+        'page_obj': page_obj,
+        'username': user.username,  # для шаблона
+    }
     return render(request, template, context)
 
 
@@ -159,9 +160,11 @@ def edit_comment(request, pk, comment_pk):
 def delete_comment(request, pk, comment_pk):
     instance = get_object_or_404(Comments, pk=comment_pk, author=request.user)
     post = get_object_or_404(Post, pk=pk)
-    post.comment_count = Comments.objects.select_related().count() - 1
-    post.save()
-    instance.delete()
+    if request.method == "POST":
+        post.comment_count = Comments.objects.filter(post=post).count() - 1
+        post.save()
+        instance.delete()
+        return redirect('blog:post_detail', pk=pk)
     return redirect('blog:post_detail', pk)
 
 
