@@ -55,17 +55,16 @@ def index(request):
 
 def post_detail(request, pk):
     template = 'blog/detail.html'
+    post = get_object_or_404(Post, pk=pk)
+    if (not post.is_published
+            or not post.category.is_published
+            or post.pub_date > timezone.now()):
+        if request.user != post.author:
+            raise Http404()
     context = {
-        'post': get_object_or_404(
-            Post,
-            pk=pk,
-            is_published__exact=True,
-            category__is_published__exact=True,
-            pub_date__lte=timezone.now(),
-        ),
+        'post': post,
         'form': CreateComments(),
-        'comments':
-        Comments.objects.select_related('author')
+        'comments': Comments.objects.filter(post=post).select_related('author')
     }
     return render(request, template, context)
 
@@ -165,7 +164,12 @@ def delete_comment(request, pk, comment_pk):
         post.save()
         instance.delete()
         return redirect('blog:post_detail', pk=pk)
-    return redirect('blog:post_detail', pk)
+    form = CreateComments(instance=instance)
+    return render(request, 'blog/comment.html', {
+        'form': form,
+        'comment': instance,
+        'post': post
+    })
 
 
 def csrf_failure(request, reason=''):
