@@ -8,21 +8,26 @@ from django.shortcuts import redirect
 from django.http import Http404
 
 from .models import Post, Category, Comments
-
 from .forms import UserForm, CreatePost, CreateComments
 
 
 def profile(request, username):
-    user = get_object_or_404(User, username=username)
+    author = get_object_or_404(User, username=username)
     template = 'blog/profile.html'
-    post_list = Post.objects.filter(author=user)
-    paginator = Paginator(post_list, 10)
+    if username == request.user.username:
+        posts = author.posts.select_related('location', 'category')
+    else:
+        posts = author.posts.select_related('location', 'category').filter(
+            is_published=True,
+            pub_date__lte=timezone.now(),
+            category__is_published=True)
+    paginator = Paginator(posts, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {
-        'profile': user,
+        'profile': author,
         'page_obj': page_obj,
-        'username': user.username,  # для шаблона
+        'username': author.username,
     }
     return render(request, template, context)
 
@@ -53,9 +58,9 @@ def index(request):
     return render(request, template, context)
 
 
-def post_detail(request, pk):
+def post_detail(request, post_pk):
     template = 'blog/detail.html'
-    post = get_object_or_404(Post, pk=pk)
+    post = get_object_or_404(Post, pk=post_pk)
     if (not post.is_published
             or not post.category.is_published
             or post.pub_date > timezone.now()):
@@ -99,8 +104,8 @@ def create_post(request):
     return render(request, template, context)
 
 
-def edit_post(request, pk):
-    instance = get_object_or_404(Post, pk=pk)
+def edit_post(request, post_pk):
+    instance = get_object_or_404(Post, pk=post_pk)
     if not request.user.is_authenticated:
         return redirect('blog:post_detail', pk=instance.pk)
     if instance.author != request.user:
@@ -121,15 +126,15 @@ def edit_post(request, pk):
 
 
 @login_required
-def delete_post(request, pk):
-    instance = get_object_or_404(Post, pk=pk, author=request.user)
+def delete_post(request, post_pk):
+    instance = get_object_or_404(Post, pk=post_pk, author=request.user)
     instance.delete()
     return redirect('blog:index')
 
 
 @login_required
-def add_comment(request, pk):
-    post = get_object_or_404(Post, pk=pk)
+def add_comment(request, post_pk):
+    post = get_object_or_404(Post, pk=post_pk)
     form = CreateComments(request.POST)
     if form.is_valid():
         instance = form.save(commit=False)
@@ -138,11 +143,11 @@ def add_comment(request, pk):
         post.comment_count = Comments.objects.select_related().count() + 1
         post.save()
         instance.save()
-    return redirect('blog:post_detail', pk)
+    return redirect('blog:post_detail', post_pk)
 
 
 @login_required
-def edit_comment(request, pk, comment_pk):
+def edit_comment(request, post_pk, comment_pk):
     instance = get_object_or_404(Comments, pk=comment_pk, author=request.user)
     form = CreateComments(request.POST or None, instance=instance)
     template = 'blog/comment.html'
@@ -151,19 +156,19 @@ def edit_comment(request, pk, comment_pk):
         instance = form.save(commit=False)
         instance.author = request.user
         instance.save()
-        return redirect('blog:post_detail', pk)
+        return redirect('blog:post_detail', post_pk)
     return render(request, template, context)
 
 
 @login_required
-def delete_comment(request, pk, comment_pk):
+def delete_comment(request, post_pk, comment_pk):
     instance = get_object_or_404(Comments, pk=comment_pk, author=request.user)
-    post = get_object_or_404(Post, pk=pk)
+    post = get_object_or_404(Post, pk=post_pk)
     if request.method == "POST":
         post.comment_count = Comments.objects.filter(post=post).count() - 1
         post.save()
         instance.delete()
-        return redirect('blog:post_detail', pk=pk)
+        return redirect('blog:post_detail', pk=post_pk)
     return render(request, "blog/comment_confirm_delete.html", {
         "comment": instance,
         "post": post,
