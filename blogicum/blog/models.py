@@ -68,9 +68,6 @@ class Post(BlogModel):
     image = models.ImageField(
         verbose_name='Изображение',
         blank=True, upload_to='images/')
-    comment_count = models.PositiveIntegerField(
-        verbose_name='Счетчик комментариев',
-        default=0)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -115,7 +112,7 @@ class Comments(models.Model):
     )
 
     class Meta:
-        ordering = ('created_at',)
+        ordering = ('-created_at',)
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
         default_related_name = 'comments'
