@@ -80,8 +80,8 @@ def category_posts(request, category_slug):
     context = {
         'category': category,
         'page_obj': pagination(category.posts.filter(
-        is_published__exact=True,
-        pub_date__lte=timezone.now()), request)}
+            is_published__exact=True,
+            pub_date__lte=timezone.now()), request)}
     return render(request, template, context)
 
 
