@@ -112,7 +112,7 @@ class Comments(models.Model):
     )
 
     class Meta:
-        ordering = ('-created_at',)
+        ordering = ('created_at',)
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
         default_related_name = 'comments'

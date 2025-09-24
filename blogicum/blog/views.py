@@ -79,7 +79,9 @@ def category_posts(request, category_slug):
             is_published__exact=True))
     context = {
         'category': category,
-        'page_obj': pagination(category.posts.all(), request)}
+        'page_obj': pagination(category.posts.filter(
+        is_published__exact=True,
+        pub_date__lte=timezone.now()), request)}
     return render(request, template, context)
 
 
@@ -118,7 +120,7 @@ def edit_post(request, post_pk):
 
 @login_required
 def delete_post(request, post_pk):
-    post = get_object_or_404(Post, pk=post_pk)
+    post = get_object_or_404(Post, pk=post_pk, author=request.user)
     if request.method == "POST":
         post.delete()
         return redirect("blog:index")
