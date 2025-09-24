@@ -50,9 +50,9 @@ def index(request):
     return render(request, template, context)
 
 
-def post_detail(request, post_pk):
+def post_detail(request, pk):
     template = 'blog/detail.html'
-    post = get_object_or_404(Post, pk=post_pk)
+    post = get_object_or_404(Post, pk=pk)
     if request.user == post.author:
         context = {
             'post': post,
@@ -62,10 +62,10 @@ def post_detail(request, post_pk):
     else:
         context = {
             'post': get_object_or_404(
-                select_posts(Post.objects.all()), pk=post_pk),
+                select_posts(Post.objects.all()), pk=pk),
             'form': CreateComments(),
             'comments': get_object_or_404(
-                select_posts(Post.objects.all()), pk=post_pk).comments.all(),
+                select_posts(Post.objects.all()), pk=pk).comments.all(),
         }
     return render(request, template, context)
 
