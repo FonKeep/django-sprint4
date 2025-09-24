@@ -43,10 +43,10 @@ def edit_profile(request):
 
 def index(request):
     template = 'blog/index.html'
-    posts =  select_posts(
+    posts = select_posts(
         Post.objects.all()).annotate(
         comment_count=Count('comments')).order_by('-pub_date')
-    context = {'page_obj': pagination(posts, request),}
+    context = {'page_obj': pagination(posts, request), }
     return render(request, template, context)
 
 
