@@ -119,6 +119,8 @@ def create_post(request):
 @login_required
 def edit_post(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
+    if not request.user.is_authenticated:
+        return redirect('login')
     if post.author.username != request.user.username:
         return redirect('blog:post_detail', post.pk)
     form = CreatePost(
