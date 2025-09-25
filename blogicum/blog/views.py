@@ -120,7 +120,7 @@ def create_post(request):
 def edit_post(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
     if post.author.username != request.user.username:
-        return redirect('login', post.pk)
+        return redirect('login')
     form = CreatePost(
         request.POST or None,
         request.FILES or None,

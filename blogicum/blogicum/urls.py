@@ -26,5 +26,5 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
-handler404 = 'blogicum.views.page_not_found'
-handler500 = 'blogicum.views.internal_error'
+handler404 = 'pages.views.page_not_found'
+handler500 = 'pages.views.internal_error'
