@@ -13,7 +13,7 @@ class UserForm(forms.ModelForm):
 class CreatePost(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ('title', 'text', 'pub_date', 'image', 'location', 'category')
+        exclude = ('author',)
         widgets = {
             'pub_date': forms.DateInput(attrs={'type': 'date'})
         }

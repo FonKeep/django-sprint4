@@ -7,7 +7,7 @@ from .const import MAX_LENGTH
 User = get_user_model()
 
 
-class BlogModel(models.Model):
+class CreatedAtIsPublishedModel(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Добавлено')
@@ -20,7 +20,7 @@ class BlogModel(models.Model):
         abstract = True
 
 
-class Category(BlogModel):
+class Category(CreatedAtIsPublishedModel):
     title = models.CharField(
         max_length=MAX_LENGTH,
         verbose_name='Заголовок')
@@ -38,10 +38,10 @@ class Category(BlogModel):
         ordering = ('title',)
 
     def __str__(self):
-        return f'{self.title[:10]}'
+        return self.title[:10]
 
 
-class Location(BlogModel):
+class Location(CreatedAtIsPublishedModel):
     name = models.CharField(
         max_length=MAX_LENGTH,
         verbose_name='Название места')
@@ -52,10 +52,10 @@ class Location(BlogModel):
         ordering = ('name',)
 
     def __str__(self):
-        return f'{self.name[:10]}'
+        return self.name[:10]
 
 
-class Post(BlogModel):
+class Post(CreatedAtIsPublishedModel):
     title = models.CharField(
         max_length=MAX_LENGTH,
         verbose_name='Заголовок')
@@ -91,7 +91,7 @@ class Post(BlogModel):
         ordering = ('-pub_date',)
 
     def __str__(self):
-        return f'{self.title[:10]}'
+        return self.title[:10]
 
 
 class Comments(models.Model):
@@ -118,4 +118,4 @@ class Comments(models.Model):
         default_related_name = 'comments'
 
     def __str__(self):
-        return f'{self.text[:10]}'
+        return self.text[:10]

@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 from django.contrib.auth.forms import UserCreationForm
 from django.views.generic.edit import CreateView
 
-from blog.views import logout_view
+from blogicum.views import logout_view
 
 
 urlpatterns = [
@@ -27,5 +27,5 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
-handler404 = 'blog.views.page_not_found'
-handler500 = 'blog.views.internal_error'
+handler404 = 'blogicum.views.page_not_found'
+handler500 = 'blogicum.views.internal_error'

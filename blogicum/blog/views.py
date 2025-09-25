@@ -1,126 +1,126 @@
-from django.shortcuts import get_object_or_404, render
-from django.utils import timezone
-from django.core.paginator import Paginator
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LogoutView
-from django.shortcuts import redirect
-from django.http import Http404
+from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db.models import Count
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
-from .models import Post, Category, Comments
-from .forms import UserForm, CreatePost, CreateComments
 from .const import POSTS_PER_PAGE
+from .forms import CreateComments, CreatePost, UserForm
+from .models import Category, Comments, Post
+
+
+def pagination(posts, request):
+    return Paginator(posts, POSTS_PER_PAGE).get_page(request.GET.get('page'))
+
+
+def select_post(posts, request_username=None, username=None):
+    if request_username and username and username == request_username:
+        posts = posts
+    else:
+        posts = get_object_or_404(
+            Post,
+            pk=posts.pk,
+            is_published=True,
+            pub_date__lte=timezone.now(),
+            category__is_published=True)
+    return posts
+
+def select_posts(posts=Post.objects.all(), request_username=None, username=None):
+    if request_username and username and username == request_username:
+        posts = posts.select_related('location', 'category').annotate(
+            comment_count=Count('comments')).order_by(Post._meta.ordering[0])
+    else:
+        posts = posts.select_related('location', 'category').filter(
+            is_published=True,
+            pub_date__lte=timezone.now(),
+            category__is_published=True).annotate(
+            comment_count=Count('comments')).order_by(Post._meta.ordering[0])
+    return posts
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    template = 'blog/profile.html'
-    if username == request.user.username:
-        posts = select_posts(
-            author.posts, self=True).annotate(
-            comment_count=Count('comments')).order_by('-pub_date')
-    else:
-        posts = select_posts(
-            author.posts).annotate(
-            comment_count=Count('comments')).order_by('-pub_date')
+    posts = select_posts(author.posts, request.user.username, author.username)
     context = {
         'profile': author,
         'page_obj': pagination(posts, request),
     }
-    return render(request, template, context)
+    return render(request, 'blog/profile.html', context)
 
 
 @login_required
 def edit_profile(request):
     form = UserForm(request.POST or None, instance=request.user)
-    template = 'blog/user.html'
     context = {'profile': request.user.username, 'form': form}
     if form.is_valid():
         form.save()
-    return render(request, template, context)
+    return render(request, 'blog/user.html', context)
 
 
 def index(request):
-    template = 'blog/index.html'
-    posts = select_posts(
-        Post.objects.all()).annotate(
-        comment_count=Count('comments')).order_by('-pub_date')
+    posts = select_posts()
     context = {'page_obj': pagination(posts, request), }
-    return render(request, template, context)
+    return render(request, 'blog/index.html', context)
 
 
-def post_detail(request, pk):
-    template = 'blog/detail.html'
-    post = get_object_or_404(Post, pk=pk)
-    if request.user == post.author:
-        context = {
-            'post': post,
-            'form': CreateComments(),
-            'comments': post.comments.all(),
+def post_detail(request, post_pk):
+    post = get_object_or_404(Post, pk=post_pk)
+    post = select_post(post, request.user.username, post.author.username)
+    context = {
+        'post': post,
+        'form': CreateComments(),
+        'comments': post.comments.all(),
         }
-    else:
-        context = {
-            'post': get_object_or_404(
-                select_posts(Post.objects.all()), pk=pk),
-            'form': CreateComments(),
-            'comments': get_object_or_404(
-                select_posts(Post.objects.all()), pk=pk).comments.all(),
-        }
-    return render(request, template, context)
+    return render(request, 'blog/detail.html', context)
 
 
 def category_posts(request, category_slug):
-    template = 'blog/category.html'
     category = (
         get_object_or_404(
             Category,
             slug=category_slug,
-            is_published__exact=True))
+            is_published=True))
     context = {
         'category': category,
-        'page_obj': pagination(category.posts.filter(
-            is_published__exact=True,
-            pub_date__lte=timezone.now()), request)}
-    return render(request, template, context)
+        'page_obj': pagination(select_posts(category.posts), request)
+    }
+    return render(request, 'blog/category.html', context)
 
 
 @login_required
 def create_post(request):
     form = CreatePost(request.POST or None, request.FILES or None)
-    template = 'blog/create.html'
     context = {'form': form}
     if form.is_valid():
         instance = form.save(commit=False)
         instance.author = request.user
         instance.save()
         return redirect('blog:profile', request.user.username)
-    return render(request, template, context)
+    return render(request, 'blog/create.html', context)
 
-
+@login_required
 def edit_post(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
-    if not request.user.is_authenticated:
-        return redirect('blog:post_detail', post.pk)
-    if post.author != request.user:
+    if post.author.username != request.user.username:
         return redirect('blog:post_detail', post.pk)
     form = CreatePost(
         request.POST or None,
         request.FILES or None,
         instance=post
     )
-    template = 'blog/create.html'
     context = {'form': form, 'post': post}
     if form.is_valid():
-        instance = form.save(commit=False)
-        instance.save()
-        return redirect('blog:post_detail', instance.pk)
-    return render(request, template, context)
+        form.save()
+        return redirect('blog:post_detail', post.pk)
+    return render(request, 'blog/create.html', context)
 
 
 @login_required
 def delete_post(request, post_pk):
-    post = get_object_or_404(Post, pk=post_pk, author=request.user)
+    post = get_object_or_404(Post, pk=post_pk)
+    if request.user != post.author:
+        return redirect('blog:post_detail', post_pk)
     if request.method == "POST":
         post.delete()
         return redirect("blog:index")
@@ -143,58 +143,26 @@ def add_comment(request, post_pk):
 
 @login_required
 def edit_comment(request, post_pk, comment_pk):
-    comment = get_object_or_404(Comments, pk=comment_pk, author=request.user)
+    comment = get_object_or_404(Comments, pk=comment_pk)
+    if request.user != comment.author:
+        return redirect('blog:post_detail', post_pk)
     form = CreateComments(request.POST or None, instance=comment)
-    template = 'blog/comment.html'
     context = {'form': form, 'comment': comment}
     if form.is_valid():
-        comment = form.save(commit=False)
-        comment.save()
+        form.save()
         return redirect('blog:post_detail', post_pk)
-    return render(request, template, context)
+    return render(request, 'blog/comment.html', context)
 
 
 @login_required
 def delete_comment(request, post_pk, comment_pk):
-    comment = get_object_or_404(Comments, pk=comment_pk, author=request.user)
-    post = get_object_or_404(Post, pk=post_pk)
+    comment = get_object_or_404(Comments, pk=comment_pk)
+    if request.user != comment.author:
+        return redirect('blog:post_detail', post_pk)
     if request.method == 'POST':
         comment.delete()
-        return redirect('blog:post_detail', pk=post_pk)
+        return redirect('blog:post_detail', post_pk)
     return render(request, 'blog/comment_confirm_delete.html', {
         'comment': comment,
-        'post': post,
+        'post': comment.post,
     })
-
-
-def csrf_failure(request, reason=''):
-    return render(request, 'pages/403csrf.html', status=403)
-
-
-def page_not_found(request, exception):
-    return render(request, 'pages/404.html', status=404)
-
-
-def internal_error(request):
-    return render(request, 'pages/500.html', status=500)
-
-
-def logout_view(request):
-    if request.method == 'POST':
-        raise Http404()
-    return LogoutView.as_view()(request)
-
-
-def pagination(posts, request):
-    return Paginator(posts, POSTS_PER_PAGE).get_page(request.GET.get('page'))
-
-
-def select_posts(posts, self=False):
-    if self:
-        selected_posts = posts.select_related('location', 'category')
-    else:
-        selected_posts = posts.select_related('location', 'category').filter(
-            is_published=True,
-            pub_date__lte=timezone.now(),
-            category__is_published=True)
-    return selected_posts
