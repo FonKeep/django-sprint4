@@ -72,12 +72,12 @@ def post_detail(request, post_pk):
         post = post
     else:
         post = get_object_or_404(
-        Post,
-        pk=post.pk,
-        is_published=True,
-        pub_date__lte=timezone.now(),
-        category__is_published=True,
-    )
+            Post,
+            pk=post.pk,
+            is_published=True,
+            pub_date__lte=timezone.now(),
+            category__is_published=True,
+        )
     context = {
         'post': post,
         'form': CreateComments(),
