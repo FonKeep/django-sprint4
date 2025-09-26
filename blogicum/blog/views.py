@@ -16,41 +16,30 @@ def pagination(posts, request):
     )
 
 
-def select_post(posts, request_username=None, username=None):
-    if request_username and username and username == request_username:
-        return posts
-    return get_object_or_404(
-        Post,
-        pk=posts.pk,
-        is_published=True,
-        pub_date__lte=timezone.now(),
-        category__is_published=True,
-    )
-
-
 def select_posts(posts=Post.objects.all(),
-                 request_username=None,
-                 username=None):
-    if request_username and username and username == request_username:
-        return posts.select_related('location', 'category').annotate(
-            comment_count=Count('comments')
-        ).order_by(Post._meta.ordering[0])
-    return posts.select_related('location', 'category').filter(
-        is_published=True,
-        pub_date__lte=timezone.now(),
-        category__is_published=True,
-    ).annotate(
-        comment_count=Count('comments')
-    ).order_by(Post._meta.ordering[0])
+                 filter_posts=True,
+                 select_related_fields=True,
+                 annotate_comments=True):
+    if filter_posts:
+        posts = posts.filter(
+            is_published=True,
+            pub_date__lte=timezone.now(),
+            category__is_published=True,
+        )
+    if select_related_fields:
+        posts = posts.select_related('author', 'location', 'category')
+    if annotate_comments:
+        posts = posts.annotate(comment_count=Count('comments'))
+    return posts.order_by(*Post._meta.ordering)
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    posts = select_posts(
-        author.posts,
-        request.user.username,
-        author.username
-    )
+    if (request.user.username and author.username and
+            author.username == request.user.username):
+        posts = select_posts(author.posts, filter_posts=False)
+    else:
+        posts = select_posts(author.posts)
     context = {
         'profile': author,
         'page_obj': pagination(posts, request),
@@ -59,7 +48,7 @@ def profile(request, username):
 
 
 @login_required
-def edit_profile(request):
+def edit_profile(request, username):
     form = UserForm(request.POST or None, instance=request.user)
     context = {
         'profile': request.user.username,
@@ -78,10 +67,16 @@ def index(request):
 
 def post_detail(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
-    post = select_post(
-        post,
-        request.user.username,
-        post.author.username
+    if (request.user.username and post.author.username and
+            post.author.username == request.user.username):
+        post = post
+    else:
+        post = get_object_or_404(
+        Post,
+        pk=post.pk,
+        is_published=True,
+        pub_date__lte=timezone.now(),
+        category__is_published=True,
     )
     context = {
         'post': post,
@@ -107,13 +102,13 @@ def category_posts(request, category_slug):
 @login_required
 def create_post(request):
     form = CreatePost(request.POST or None, request.FILES or None)
-    context = {'form': form}
-    if form.is_valid():
-        instance = form.save(commit=False)
-        instance.author = request.user
-        instance.save()
-        return redirect('blog:profile', request.user.username)
-    return render(request, 'blog/create.html', context)
+    if not form.is_valid():
+        context = {'form': form}
+        return render(request, 'blog/create.html', context)
+    instance = form.save(commit=False)
+    instance.author = request.user
+    instance.save()
+    return redirect('blog:profile', request.user.username)
 
 
 @login_required
