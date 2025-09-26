@@ -36,7 +36,7 @@ def select_posts(posts=Post.objects.all(),
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     if (request.user.username and author.username and
-            author.username == request.user.username):
+        author.username == request.user.username):
         posts = select_posts(author.posts, filter_posts=False)
     else:
         posts = select_posts(author.posts)
@@ -68,7 +68,7 @@ def index(request):
 def post_detail(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
     if (request.user.username and post.author.username and
-            post.author.username == request.user.username):
+        post.author.username == request.user.username):
         post = post
     else:
         post = get_object_or_404(
