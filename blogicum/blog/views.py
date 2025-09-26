@@ -68,9 +68,9 @@ def index(request):
 
 def post_detail(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
-    if (request.user.username and
-            post.author.username and
-            post.author.username == request.user.username):
+    if (request.user.username
+            and post.author.username
+            and post.author.username == request.user.username):
         post = post
     else:
         post = get_object_or_404(
