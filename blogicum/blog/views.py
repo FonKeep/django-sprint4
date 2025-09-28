@@ -10,8 +10,8 @@ from .forms import CreateComments, CreatePost, UserForm
 from .models import Category, Comments, Post
 
 
-def pagination(posts, request):
-    return Paginator(posts, POSTS_PER_PAGE).get_page(
+def pagination(posts, request, posts_per_page=POSTS_PER_PAGE):
+    return Paginator(posts, posts_per_page).get_page(
         request.GET.get('page')
     )
 
@@ -29,18 +29,18 @@ def select_posts(posts=Post.objects.all(),
     if select_related_fields:
         posts = posts.select_related('author', 'location', 'category')
     if annotate_comments:
-        posts = posts.annotate(comment_count=Count('comments'))
-    return posts.order_by(*Post._meta.ordering)
+        posts = posts.annotate(
+            comment_count=Count('comments')).order_by(*Post._meta.ordering)
+    return posts
 
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    if (request.user.username
-            and author.username
-            and author.username == request.user.username):
-        posts = select_posts(author.posts, filter_posts=False)
+    if author.username != request.user.username:
+        filter_posts = True
     else:
-        posts = select_posts(author.posts)
+        filter_posts = False
+    posts = select_posts(author.posts, filter_posts=filter_posts)
     context = {
         'profile': author,
         'page_obj': pagination(posts, request),
@@ -68,17 +68,12 @@ def index(request):
 
 def post_detail(request, post_pk):
     post = get_object_or_404(Post, pk=post_pk)
-    if (request.user.username
-            and post.author.username
-            and post.author.username == request.user.username):
+    if post.author.username == request.user.username:
         post = post
     else:
         post = get_object_or_404(
-            Post,
-            pk=post.pk,
-            is_published=True,
-            pub_date__lte=timezone.now(),
-            category__is_published=True,
+            select_posts(),
+            pk=post_pk
         )
     context = {
         'post': post,
