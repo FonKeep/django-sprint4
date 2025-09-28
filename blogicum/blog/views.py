@@ -36,11 +36,9 @@ def select_posts(posts=Post.objects.all(),
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    if author.username != request.user.username:
-        filter_posts = True
-    else:
-        filter_posts = False
-    posts = select_posts(author.posts, filter_posts=filter_posts)
+    posts = select_posts(
+        author.posts,
+        filter_posts=author.username != request.user.username)
     context = {
         'profile': author,
         'page_obj': pagination(posts, request),
@@ -72,7 +70,7 @@ def post_detail(request, post_pk):
         post = post
     else:
         post = get_object_or_404(
-            select_posts(),
+            select_posts(select_related_fields=False, annotate_comments=False),
             pk=post_pk
         )
     context = {
